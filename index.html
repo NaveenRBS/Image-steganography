@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Steganography Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .file-input-container {
+            margin-bottom: 20px;
+        }
+
+        .file-input-label {
+            display: block;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: white;
+        }
+
+        .file-input-label:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.05);
+            transform: scale(1.02);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #888;
+            margin-top: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            background: #ccc;
+        }
+
+        .preview-container {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .success {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .error {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .file-info {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+            margin-top: -15px;
+            margin-bottom: 20px;
+        }
+
+        .char-counter.over-limit {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Image Steganography Tool</h1>
+        
+        <div class="tabs">
+            <button class="tab active" id="hideTab">Hide Message</button>
+            <button class="tab" id="extractTab">Extract Message</button>
+        </div>
+
+        <!-- Hide Message Tab -->
+        <div id="hide-content" class="tab-content active">
+            <div class="file-input-container">
+                <label for="hideFileInput" class="file-input-label">
+                    <div class="upload-text">📁 Click to select an image</div>
+                    <div class="upload-subtext">Supports PNG, JPG, JPEG formats</div>
+                </label>
+                <input type="file" id="hideFileInput" class="file-input" accept="image/png,image/jpeg,image/jpg">
+            </div>
+            
+            <div id="hideFileInfo" class="file-info" style="display: none;"></div>
+            
+            <textarea id="messageInput" placeholder="Enter your secret message here..."></textarea>
+            <div id="charCounter" class="char-counter"></div>
+            
+            <button class="btn" id="hideBtn" disabled>🔒 Hide Message in Image</button>
+            
+            <div class="loading" id="hideLoading">
+                <div class="spinner"></div>
+                <div>Processing image...</div>
+            </div>
+            
+            <div class="preview-container" id="hidePreview">
+                <h3>Original Image:</h3>
+                <img id="originalImg" alt="Original">
+                <h3 style="margin-top: 20px;">Modified Image (with hidden message):</h3>
+                <img id="modifiedImg" alt="Modified">
+                <button class="btn" id="downloadBtn" style="margin-top: 20px; display: none;">⬇️ Download Modified Image</button>
+            </div>
+            
+            <div class="result-container" id="hideResult"></div>
+        </div>
+
+        <!-- Extract Message Tab -->
+        <div id="extract-content" class="tab-content">
+            <div class="file-input-container">
+                <label for="extractFileInput" class="file-input-label">
+                    <div class="upload-text">📁 Select image with hidden message</div>
+                    <div class="upload-subtext">Upload the steganographic image</div>
+                </label>
+                <input type="file" id="extractFileInput" class="file-input" accept="image/png,image/jpeg,image/jpg">
+            </div>
+            
+            <div id="extractFileInfo" class="file-info" style="display: none;"></div>
+            
+            <button class="btn" id="extractBtn" disabled>🔍 Extract Hidden Message</button>
+            
+            <div class="loading" id="extractLoading">
+                <div class="spinner"></div>
+                <div>Extracting message...</div>
+            </div>
+            
+            <div class="result-container" id="extractResult"></div>
+        </div>
+    </div>
+
+    <script>
+        let hideImageData = null;
+        let extractImageData = null;
+        let modifiedImageBlob = null;
+        let originalFileName = '';
+
+        // Tab switching
+        document.getElementById('hideTab').addEventListener('click', () => switchTab('hide'));
+        document.getElementById('extractTab').addEventListener('click', () => switchTab('extract'));
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'hide') {
+                document.getElementById('hideTab').classList.add('active');
+                document.getElementById('hide-content').classList.add('active');
+            } else {
+                document.getElementById('extractTab').classList.add('active');
+                document.getElementById('extract-content').classList.add('active');
+            }
+        }
+
+        // File input handling
+        document.getElementById('hideFileInput').addEventListener('change', function(e) {
+            handleFileSelection(this, 'hide');
+        });
+
+        document.getElementById('extractFileInput').addEventListener('change', function(e) {
+            handleFileSelection(this, 'extract');
+        });
+
+        function handleFileSelection(input, mode) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (!file.type.match('image.*')) {
+                alert('Please select a valid image file');
+                input.value = '';
+                return;
+            }
+
+            originalFileName = file.name.split('.')[0];
+
+            if (mode === 'hide') {
+                document.getElementById('hideResult').innerHTML = `
+                    <div style="color: #2196f3;">🔄 Loading image: ${file.name}...</div>
+                `;
+                document.getElementById('hideResult').style.display = 'block';
+                displayFileInfo('hideFileInfo', file);
+                loadImageForHiding(file);
+            } else {
+                document.getElementById('extractResult').innerHTML = `
+                    <div style="color: #2196f3;">🔄 Loading image: ${file.name}...</div>
+                `;
+                document.getElementById('extractResult').style.display = 'block';
+                displayFileInfo('extractFileInfo', file);
+                loadImageForExtracting(file);
+            }
+        }
+
+        function displayFileInfo(containerId, file) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <strong>📄 File Selected:</strong><br>
+                Name: ${file.name}<br>
+                Size: ${(file.size / 1024).toFixed(2)} KB<br>
+                Type: ${file.type}
+            `;
+            container.style.display = 'block';
+        }
+
+        function loadImageForHiding(file) {
+            const reader = new FileReader();
+            reader.onerror = function(error) {
+                console.error('FileReader error:', error);
+                document.getElementById('hideResult').innerHTML = `
+                    <div class="error">❌ Error reading file</div>
+                `;
+                document.getElementById('hideResult').style.display = 'block';
+            };
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onerror = function() {
+                    document.getElementById('hideResult').innerHTML = `
+                        <div class="error">❌ Error loading image: Invalid image file</div>
+                    `;
+                    document.getElementById('hideResult').style.display = 'block';
+                };
+                
+                img.onload = function() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        hideImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        
+                        // Show original image
+                        const originalImg = document.getElementById('originalImg');
+                        originalImg.src = e.target.result;
+                        
+                        document.getElementById('hideBtn').disabled = false;
+                        updateCharCounter();
+                        
+                        // Show capacity info
+                        const maxChars = Math.floor((hideImageData.data.length / 4) * 3 / 8) - 4;
+                        document.getElementById('hideResult').innerHTML = `
+                            <div class="success">✅ Image loaded successfully!</div>
+                            <div>Image dimensions: ${img.width} × ${img.height}</div>
+                            <div>Maximum message capacity: ~${maxChars} characters</div>
+                        `;
+                        document.getElementById('hideResult').style.display = 'block';
+                    } catch (error) {
+                        console.error('Canvas processing error:', error);
+                        document.getElementById('hideResult').innerHTML = `
+                            <div class="error">❌ Error processing image: ${error.message}</div>
+                        `;
+                        document.getElementById('hideResult').style.display = 'block';
+                    }
+                };
+                
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function loadImageForExtracting(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        extractImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        document.getElementById('extractBtn').disabled = false;
+                        
+                        document.getElementById('extractResult').innerHTML = `
+                            <div class="success">✅ Image loaded and ready for extraction!</div>
+                            <div>Image dimensions: ${img.width} × ${img.height}</div>
+                        `;
+                        document.getElementById('extractResult').style.display = 'block';
+                    } catch (error) {
+                        console.error('Error loading image:', error);
+                        document.getElementById('extractResult').innerHTML = `
+                            <div class="error">❌ Error loading image: ${error.message}</div>
+                        `;
+                        document.getElementById('extractResult').style.display = 'block';
+                    }
+                };
+                img.onerror = function() {
+                    document.getElementById('extractResult').innerHTML = `
+                        <div class="error">❌ Error loading image: Invalid image file</div>
+                    `;
+                    document.getElementById('extractResult').style.display = 'block';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Hide message functionality
+        document.getElementById('hideBtn').addEventListener('click', hideMessage);
+
+        function hideMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (!message.trim()) {
+                alert('Please enter a message to hide!');
+                return;
+            }
+
+            if (!hideImageData) {
+                alert('Please select an image first!');
+                return;
+            }
+
+            document.getElementById('hideLoading').style.display = 'block';
+            document.getElementById('hideResult').style.display = 'none';
+
+            setTimeout(() => {
+                try {
+                    const messageBytes = new TextEncoder().encode(message);
+                    const maxCapacity = Math.floor((hideImageData.data.length / 4) * 3 / 8) - 4;
+                    
+                    if (messageBytes.length > maxCapacity) {
+                        throw new Error(`Message too long! Maximum ${maxCapacity} characters allowed.`);
+                    }
+
+                    // Create a copy of the image data
+                    const modifiedData = new ImageData(
+                        new Uint8ClampedArray(hideImageData.data),
+                        hideImageData.width,
+                        hideImageData.height
+                    );
+
+                    // Embed message length (4 bytes)
+                    const lengthBytes = new ArrayBuffer(4);
+                    new DataView(lengthBytes).setUint32(0, messageBytes.length, false);
+                    const lengthArray = new Uint8Array(lengthBytes);
+
+                    let dataIndex = 0;
+
+                    // Embed length
+                    for (let i = 0; i < lengthArray.length; i++) {
+                        for (let bit = 0; bit < 8; bit++) {
+                            if (dataIndex >= modifiedData.data.length) break;
+                            
+                            const bitValue = (lengthArray[i] >> (7 - bit)) & 1;
+                            // Skip alpha channel (every 4th byte)
+                            if (dataIndex % 4 === 3) dataIndex++;
+                            if (dataIndex >= modifiedData.data.length) break;
+                            
+                            modifiedData.data[dataIndex] = (modifiedData.data[dataIndex] & 0xFE) | bitValue;
+                            dataIndex++;
+                        }
+                    }
+
+                    // Embed message
+                    for (let i = 0; i < messageBytes.length; i++) {
+                        for (let bit = 0; bit < 8; bit++) {
+                            if (dataIndex >= modifiedData.data.length) break;
+                            
+                            const bitValue = (messageBytes[i] >> (7 - bit)) & 1;
+                            // Skip alpha channel
+                            if (dataIndex % 4 === 3) dataIndex++;
+                            if (dataIndex >= modifiedData.data.length) break;
+                            
+                            modifiedData.data[dataIndex] = (modifiedData.data[dataIndex] & 0xFE) | bitValue;
+                            dataIndex++;
+                        }
+                    }
+
+                    // Create canvas with modified data
+                    const canvas = document.createElement('canvas');
+                    canvas.width = modifiedData.width;
+                    canvas.height = modifiedData.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.putImageData(modifiedData, 0, 0);
+
+                    // Convert to blob and display - using high quality
+                    canvas.toBlob(function(blob) {
+                        if (!blob) {
+                            throw new Error('Failed to create image blob');
+                        }
+                        
+                        modifiedImageBlob = blob;
+                        const url = URL.createObjectURL(blob);
+                        
+                        const modifiedImg = document.getElementById('modifiedImg');
+                        modifiedImg.onload = function() {
+                            document.getElementById('hidePreview').style.display = 'block';
+                            document.getElementById('downloadBtn').style.display = 'inline-block';
+                            
+                            document.getElementById('hideResult').innerHTML = `
+                                <div class="success">✅ Message hidden successfully!</div>
+                                <div>Message length: ${messageBytes.length} bytes</div>
+                                <div>Modified image size: ${(blob.size / 1024).toFixed(2)} KB</div>
+                                <div>Ready for download!</div>
+                            `;
+                            document.getElementById('hideResult').style.display = 'block';
+                            document.getElementById('hideLoading').style.display = 'none';
+                        };
+                        modifiedImg.src = url;
+
+                    }, 'image/png', 1.0); // Maximum quality
+
+                } catch (error) {
+                    document.getElementById('hideResult').innerHTML = `
+                        <div class="error">❌ Error: ${error.message}</div>
+                    `;
+                    document.getElementById('hideResult').style.display = 'block';
+                    document.getElementById('hideLoading').style.display = 'none';
+                }
+            }, 100);
+        }
+
+        // Extract message functionality
+        document.getElementById('extractBtn').addEventListener('click', extractMessage);
+
+        function extractMessage() {
+            if (!extractImageData) {
+                alert('Please select an image first!');
+                return;
+            }
+
+            document.getElementById('extractLoading').style.display = 'block';
+            document.getElementById('extractResult').style.display = 'none';
+
+            setTimeout(() => {
+                try {
+                    let dataIndex = 0;
+                    
+                    // Extract message length (4 bytes)
+                    const lengthBytes = new Uint8Array(4);
+                    for (let i = 0; i < 4; i++) {
+                        let byte = 0;
+                        for (let bit = 0; bit < 8; bit++) {
+                            if (dataIndex >= extractImageData.data.length) break;
+                            
+                            // Skip alpha channel
+                            if (dataIndex % 4 === 3) dataIndex++;
+                            if (dataIndex >= extractImageData.data.length) break;
+                            
+                            const bitValue = extractImageData.data[dataIndex] & 1;
+                            byte = (byte << 1) | bitValue;
+                            dataIndex++;
+                        }
+                        lengthBytes[i] = byte;
+                    }
+                    
+                    const messageLength = new DataView(lengthBytes.buffer).getUint32(0, false);
+                    
+                    if (messageLength === 0 || messageLength > 1000000) {
+                        throw new Error('No valid hidden message found or message corrupted');
+                    }
+
+                    // Extract message
+                    const messageBytes = new Uint8Array(messageLength);
+                    for (let i = 0; i < messageLength; i++) {
+                        let byte = 0;
+                        for (let bit = 0; bit < 8; bit++) {
+                            if (dataIndex >= extractImageData.data.length) break;
+                            
+                            // Skip alpha channel
+                            if (dataIndex % 4 === 3) dataIndex++;
+                            if (dataIndex >= extractImageData.data.length) break;
+                            
+                            const bitValue = extractImageData.data[dataIndex] & 1;
+                            byte = (byte << 1) | bitValue;
+                            dataIndex++;
+                        }
+                        messageBytes[i] = byte;
+                    }
+
+                    const message = new TextDecoder().decode(messageBytes);
+                    
+                    document.getElementById('extractResult').innerHTML = `
+                        <div class="success">✅ Hidden message extracted successfully!</div>
+                        <div style="margin-top: 15px;"><strong>📝 Hidden Message:</strong></div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #ddd; font-family: monospace; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">${message}</div>
+                        <div style="margin-top: 10px; color: #666; font-size: 14px;">Message length: ${messageLength} bytes</div>
+                    `;
+                    document.getElementById('extractResult').style.display = 'block';
+                    document.getElementById('extractLoading').style.display = 'none';
+
+                } catch (error) {
+                    document.getElementById('extractResult').innerHTML = `
+                        <div class="error">❌ Error: ${error.message}</div>
+                        <div style="margin-top: 10px; color: #666;">Make sure this image contains a hidden message created by this tool.</div>
+                    `;
+                    document.getElementById('extractResult').style.display = 'block';
+                    document.getElementById('extractLoading').style.display = 'none';
+                }
+            }, 100);
+        }
+
+        // Improved download functionality
+        document.getElementById('downloadBtn').addEventListener('click', downloadImage);
+
+        function downloadImage() {
+            try {
+                if (!modifiedImageBlob) {
+                    alert('No image available for download!');
+                    return;
+                }
+
+                // Create download link
+                const url = URL.createObjectURL(modifiedImageBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${originalFileName || 'steganographic'}_with_hidden_message.png`;
+                a.style.display = 'none';
+                
+                // Add to DOM, click, and remove
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Clean up object URL after a delay
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 1000);
+                
+                // Show feedback
+                const downloadBtn = document.getElementById('downloadBtn');
+                const originalText = downloadBtn.textContent;
+                downloadBtn.textContent = '✅ Downloaded!';
+                downloadBtn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    downloadBtn.textContent = originalText;
+                    downloadBtn.style.background = '';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Error downloading image: ' + error.message);
+            }
+        }
+
+        // Message input character counter
+        document.getElementById('messageInput').addEventListener('input', updateCharCounter);
+
+        function updateCharCounter() {
+            const message = document.getElementById('messageInput').value;
+            const messageBytes = new TextEncoder().encode(message);
+            const counter = document.getElementById('charCounter');
+            
+            if (hideImageData) {
+                const maxCapacity = Math.floor((hideImageData.data.length / 4) * 3 / 8) - 4;
+                const remaining = maxCapacity - messageBytes.length;
+                
+                counter.textContent = `${messageBytes.length} / ${maxCapacity} bytes`;
+                
+                if (remaining < 0) {
+                    counter.classList.add('over-limit');
+                    document.getElementById('messageInput').style.borderColor = '#dc3545';
+                } else {
+                    counter.classList.remove('over-limit');
+                    document.getElementById('messageInput').style.borderColor = '#28a745';
+                }
+            } else {
+                counter.textContent = `${messageBytes.length} bytes`;
+            }
+        }
+
+        // Alternative download method for browsers that don't support the standard method
+        function fallbackDownload() {
+            if (!modifiedImageBlob) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const link = document.createElement('a');
+                link.href = e.target.result;
+                link.download = `${originalFileName || 'steganographic'}_with_hidden_message.png`;
+                link.click();
+            };
+            reader.readAsDataURL(modifiedImageBlob);
+        }
+    </script>
+</body>
+</html>
